@@ -1,0 +1,679 @@
+Here's the full code — copy and paste into GitHub as `index.html`:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rack">
+<meta name="theme-color" content="#15171A">
+<title>Rack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #15171A;
+    --surface: #1D2023;
+    --line: #33373B;
+    --chalk: #ECEAE3;
+    --muted: #888D92;
+    --iron: #E2531B;
+    --tape: #C9D14A;
+    --radius: 3px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--chalk);
+    font-family:'Work Sans', sans-serif;
+    overflow-x:hidden;
+  }
+  .app{
+    max-width:520px;
+    margin:0 auto;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:22px 20px 16px;
+    border-bottom:1px solid var(--line);
+  }
+  .topbar-left{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .back{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--chalk);
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .15s;
+  }
+  .back.show{ opacity:1; pointer-events:auto; }
+  .back:active{ background:var(--surface); }
+  .settings-btn{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--chalk);
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    display:none;
+  }
+  .settings-btn:active{ background:var(--surface); }
+  .topbar h1{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:32px;
+    letter-spacing:0.5px;
+    margin:0;
+    font-weight:400;
+  }
+  .topbar .sub{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:2px;
+    text-transform:none;
+  }
+  main{
+    flex:1;
+    padding:18px 20px 40px;
+  }
+  .view{ display:none; }
+  .view.active{ display:block; }
+  .split-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+  .split-tile{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-left:4px solid var(--iron);
+    padding:26px 18px;
+    cursor:pointer;
+    min-height:120px;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+  }
+  .split-tile:nth-child(2){ border-left-color: var(--tape); }
+  .split-tile:nth-child(3){ border-left-color: #4FA3D1; }
+  .split-tile:nth-child(4){ border-left-color: #C77DC4; }
+  .split-tile:active{ background:#23272a; }
+  .split-tile .name{
+    font-family:'Bebas Neue', sans-serif;
+    font-size:26px;
+    letter-spacing:0.5px;
+  }
+  .split-tile .count{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+  .ex-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:16px 4px;
+    border-bottom:1px solid var(--line);
+    cursor:pointer;
+  }
+  .ex-row:active{ background:var(--surface); }
+  .ex-row .name{
+    font-size:16px;
+    font-weight:500;
+  }
+  .ex-row .last{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+    text-align:right;
+  }
+  .ex-row .last .none{ color:#565A5E; }
+  .ex-row .chev{ color:var(--muted); margin-left:10px; font-size:14px;}
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    padding:20px;
+    margin-bottom:20px;
+  }
+  .card .label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:14px;
+  }
+  .field-row{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .field label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    color:var(--muted);
+  }
+  .field input, .field select{
+    background:var(--bg);
+    border:1px solid var(--line);
+    color:var(--chalk);
+    font-family:'JetBrains Mono', monospace;
+    font-size:14px;
+    padding:10px 8px;
+    border-radius:var(--radius);
+    width:100%;
+  }
+  .field input[type="number"]{
+    font-size:18px;
+  }
+  .field input:focus, .field select:focus{
+    outline:none;
+    border-color:var(--iron);
+  }
+  .log-btn{
+    width:100%;
+    background:var(--iron);
+    color:#15171A;
+    border:none;
+    padding:14px;
+    font-family:'Bebas Neue', sans-serif;
+    font-size:18px;
+    letter-spacing:0.5px;
+    border-radius:var(--radius);
+    cursor:pointer;
+  }
+  .log-btn:active{ background:#c9481a; }
+  .log-btn:disabled{ background:#3a3d40; color:var(--muted); cursor:default; }
+  .hist-title{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    margin:0 0 10px 4px;
+  }
+  .hist-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 4px;
+    border-bottom:1px solid var(--line);
+    font-size:14px;
+  }
+  .hist-row .date{ color:var(--muted); font-family:'JetBrains Mono', monospace; font-size:12px; }
+  .hist-row .stats{ font-family:'JetBrains Mono', monospace; }
+  .hist-empty{
+    color:var(--muted);
+    font-size:13px;
+    padding:16px 4px;
+  }
+  .toast{
+    position:fixed;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--tape);
+    color:#15171A;
+    padding:10px 18px;
+    border-radius:var(--radius);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    opacity:0;
+    transition:opacity .2s, transform .2s;
+    pointer-events:none;
+  }
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+  .banner{
+    display:none;
+    background:#3a2a1a;
+    border-bottom:1px solid var(--iron);
+    color:var(--chalk);
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    padding:10px 20px;
+    line-height:1.5;
+  }
+  .banner.show{ display:block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="banner" id="storageBanner">Storage isn't available in this browser (private/incognito mode may block it) — progress won't be saved after you close this.</div>
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="back" id="backBtn">‹</button>
+      <div>
+        <h1 id="pageTitle">RACK</h1>
+        <div class="sub" id="pageSub">log it. lift it.</div>
+      </div>
+    </div>
+    <button class="settings-btn" id="settingsBtn">⚙</button>
+  </div>
+
+  <main>
+    <div class="view active" id="view-home">
+      <div class="split-grid" id="splitGrid"></div>
+    </div>
+
+    <div class="view" id="view-category">
+      <div id="exList"></div>
+    </div>
+
+    <div class="view" id="view-exercise">
+      <div class="card">
+        <div class="label">LAST SESSION — edit and log today</div>
+        <div class="field-row">
+          <div class="field">
+            <label>REPS</label>
+            <input type="number" inputmode="numeric" id="inReps" placeholder="0">
+          </div>
+          <div class="field">
+            <label>SETS</label>
+            <input type="number" inputmode="numeric" id="inSets" placeholder="0">
+          </div>
+          <div class="field">
+            <label>WEIGHT (KG)</label>
+            <input type="number" inputmode="decimal" id="inWeight" placeholder="0">
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:16px;">
+          <label>SECONDS (optional)</label>
+          <input type="number" inputmode="numeric" id="inSeconds" placeholder="0">
+        </div>
+        <button class="log-btn" id="logBtn">LOG TODAY'S SESSION</button>
+      </div>
+
+      <div class="hist-title">HISTORY</div>
+      <div id="histList"></div>
+    </div>
+
+    <div class="view" id="view-settings">
+      <div class="card">
+        <div class="label">ADD NEW CATEGORY</div>
+        <div class="field" style="margin-bottom:16px;">
+          <label>CATEGORY NAME</label>
+          <input type="text" id="newCatName" placeholder="e.g. Arms">
+        </div>
+        <button class="log-btn" id="addCatBtn">ADD CATEGORY</button>
+      </div>
+
+      <div class="card">
+        <div class="label">ADD NEW EXERCISE</div>
+        <div class="field" style="margin-bottom:12px;">
+          <label>CATEGORY</label>
+          <select id="catSelect">
+            <option value="">Select a category</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:16px;">
+          <label>EXERCISE NAME</label>
+          <input type="text" id="newExName" placeholder="e.g. Bicep Curl">
+        </div>
+        <button class="log-btn" id="addExBtn">ADD EXERCISE</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast">Saved</div>
+
+<script>
+let CATEGORIES = {
+  push: {
+    label: "Push",
+    exercises: ["Flat Bench Press","Incline Bench Press","Skull Crusher","Overhead Press","Tricep Push Down","Chest Fly"]
+  },
+  pull: {
+    label: "Pull",
+    exercises: ["Lat Pulldown","Seated Row","Pull Up","Hammer Curl","Back Extension","Single-Arm Rear Delt Fly","Shrug"]
+  },
+  legs: {
+    label: "Legs",
+    exercises: ["Back Squat","Leg Extension Machine","Hamstring Curl Machine","Adductor Machine","Abductor Machine","Seated Calf Raise","Standing Calf Raise","Split Squat","Nordic Curl","Power Clean","Hip Flexor Raise"]
+  },
+  core: {
+    label: "Core",
+    exercises: ["Copenhagen Plank","Crunches","Decline Crunches"]
+  }
+};
+
+let state = { screen: 'home', category: null, exercise: null };
+
+const customCategoriesJson = localStorage.getItem('rack:categories');
+if(customCategoriesJson){
+  try{
+    const custom = JSON.parse(customCategoriesJson);
+    CATEGORIES = Object.assign({}, CATEGORIES, custom);
+  }catch(e){}
+}
+
+const hasRealStorage = !!(window.storage && typeof window.storage.get === 'function');
+const hasLocalStorage = (() => {
+  try{
+    localStorage.setItem('__rack_test__','1');
+    localStorage.removeItem('__rack_test__');
+    return true;
+  }catch(e){ return false; }
+})();
+
+if(!hasRealStorage && !hasLocalStorage){
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('storageBanner').classList.add('show');
+  });
+}
+
+const memoryFallback = {};
+const storage = hasRealStorage ? window.storage : (hasLocalStorage ? {
+  async get(key){
+    const v = localStorage.getItem(key);
+    return v === null ? null : { key, value: v, shared:false };
+  },
+  async set(key, value){
+    localStorage.setItem(key, value);
+    return { key, value, shared:false };
+  }
+} : {
+  async get(key){
+    return Object.prototype.hasOwnProperty.call(memoryFallback, key)
+      ? { key, value: memoryFallback[key], shared:false }
+      : null;
+  },
+  async set(key, value){
+    memoryFallback[key] = value;
+    return { key, value, shared:false };
+  }
+});
+
+function saveCategories(){
+  const custom = {};
+  Object.keys(CATEGORIES).forEach(key => {
+    if(!['push','pull','legs','core'].includes(key)){
+      custom[key] = CATEGORIES[key];
+    }
+  });
+  localStorage.setItem('rack:categories', JSON.stringify(custom));
+}
+
+function slugify(cat, name){
+  return cat + ':' + name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+}
+
+function fmtDate(iso){
+  const d = new Date(iso);
+  const today = new Date();
+  const isToday = d.toDateString() === today.toDateString();
+  if(isToday) return 'Today';
+  return d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+}
+
+async function getHistory(slug){
+  try{
+    const res = await storage.get('log:' + slug, false);
+    if(!res) return [];
+    return JSON.parse(res.value);
+  }catch(e){
+    return [];
+  }
+}
+
+async function saveHistory(slug, entries){
+  try{
+    const res = await storage.set('log:' + slug, JSON.stringify(entries), false);
+    return !!res;
+  }catch(e){
+    return false;
+  }
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 1400);
+}
+
+function setView(name){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.getElementById('backBtn').classList.toggle('show', name !== 'home');
+  document.getElementById('settingsBtn').style.display = name === 'home' ? 'flex' : 'none';
+}
+
+function goHome(){
+  state = { screen:'home', category:null, exercise:null };
+  document.getElementById('pageTitle').textContent = 'RACK';
+  document.getElementById('pageSub').textContent = 'log it. lift it.';
+  setView('home');
+  renderHome();
+}
+
+function goSettings(){
+  state.screen = 'settings';
+  document.getElementById('pageTitle').textContent = 'SETTINGS';
+  document.getElementById('pageSub').textContent = 'add categories & exercises';
+  setView('settings');
+  renderSettingsDropdown();
+}
+
+function goCategory(catKey){
+  state.screen = 'category';
+  state.category = catKey;
+  document.getElementById('pageTitle').textContent = CATEGORIES[catKey].label.toUpperCase();
+  document.getElementById('pageSub').textContent = CATEGORIES[catKey].exercises.length + ' exercises';
+  setView('category');
+  renderCategory(catKey);
+}
+
+async function goExercise(catKey, exName){
+  state.screen = 'exercise';
+  state.category = catKey;
+  state.exercise = exName;
+  document.getElementById('pageTitle').textContent = exName.toUpperCase();
+  document.getElementById('pageSub').textContent = CATEGORIES[catKey].label;
+  setView('exercise');
+  await renderExercise(catKey, exName);
+}
+
+function renderHome(){
+  const grid = document.getElementById('splitGrid');
+  grid.innerHTML = '';
+  Object.keys(CATEGORIES).forEach(key => {
+    const cat = CATEGORIES[key];
+    const tile = document.createElement('div');
+    tile.className = 'split-tile';
+    tile.innerHTML = `<div class="name">${cat.label}</div><div class="count">${cat.exercises.length} exercises</div>`;
+    tile.addEventListener('click', () => goCategory(key));
+    grid.appendChild(tile);
+  });
+}
+
+async function renderCategory(catKey){
+  const list = document.getElementById('exList');
+  list.innerHTML = '';
+  const cat = CATEGORIES[catKey];
+  for(const name of cat.exercises){
+    const slug = slugify(catKey, name);
+    const hist = await getHistory(slug);
+    const last = hist[0];
+    const row = document.createElement('div');
+    row.className = 'ex-row';
+    const lastText = last
+      ? `${last.reps}×${last.sets} ${last.weight}kg${last.seconds ? ' '+last.seconds+'s' : ''}`
+      : `<span class="none">not logged</span>`;
+    row.innerHTML = `
+      <div class="name">${name}</div>
+      <div style="display:flex; align-items:center;">
+        <div class="last">${lastText}</div>
+        <div class="chev">›</div>
+      </div>`;
+    row.addEventListener('click', () => goExercise(catKey, name));
+    list.appendChild(row);
+  }
+}
+
+async function renderExercise(catKey, name){
+  const slug = slugify(catKey, name);
+  const hist = await getHistory(slug);
+  const last = hist[0];
+
+  document.getElementById('inReps').value = last ? last.reps : '';
+  document.getElementById('inSets').value = last ? last.sets : '';
+  document.getElementById('inWeight').value = last ? last.weight : '';
+  document.getElementById('inSeconds').value = last && last.seconds ? last.seconds : '';
+
+  const histList = document.getElementById('histList');
+  histList.innerHTML = '';
+  if(hist.length === 0){
+    histList.innerHTML = '<div class="hist-empty">No sessions yet — log your first one above.</div>';
+  } else {
+    hist.forEach(entry => {
+      const row = document.createElement('div');
+      row.className = 'hist-row';
+      const secs = entry.seconds ? ' '+entry.seconds+'s' : '';
+      row.innerHTML = `<div class="date">${fmtDate(entry.date)}</div><div class="stats">${entry.reps}×${entry.sets} ${entry.weight}kg${secs}</div>`;
+      histList.appendChild(row);
+    });
+  }
+
+  const btn = document.getElementById('logBtn');
+  const newBtn = btn.cloneNode(true);
+  btn.parentNode.replaceChild(newBtn, btn);
+  newBtn.addEventListener('click', async () => {
+    const reps = document.getElementById('inReps').value;
+    const sets = document.getElementById('inSets').value;
+    const weight = document.getElementById('inWeight').value;
+    const seconds = document.getElementById('inSeconds').value;
+    if(reps === '' || sets === '' || weight === ''){
+      showToast('Fill in reps, sets, and weight');
+      return;
+    }
+    newBtn.disabled = true;
+    const nowIso = new Date().toISOString();
+    let entries = await getHistory(slug);
+    const todayStr = new Date().toDateString();
+    const isSameDay = entries[0] && new Date(entries[0].date).toDateString() === todayStr;
+    const newEntry = { date: nowIso, reps, sets, weight };
+    if(seconds) newEntry.seconds = seconds;
+    if(isSameDay){
+      entries[0] = newEntry;
+    } else {
+      entries.unshift(newEntry);
+    }
+    const ok = await saveHistory(slug, entries);
+    newBtn.disabled = false;
+    if(ok){
+      showToast(isSameDay ? 'Updated today\'s session' : 'Session logged');
+      renderExercise(catKey, name);
+    } else {
+      showToast('Could not save — try again');
+    }
+  });
+}
+
+function renderSettingsDropdown(){
+  const sel = document.getElementById('catSelect');
+  sel.innerHTML = '<option value="">Select a category</option>';
+  Object.keys(CATEGORIES).forEach(key => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = CATEGORIES[key].label;
+    sel.appendChild(opt);
+  });
+}
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  if(state.screen === 'exercise'){
+    goCategory(state.category);
+  } else if(state.screen === 'category'){
+    goHome();
+  } else if(state.screen === 'settings'){
+    goHome();
+  }
+});
+
+document.getElementById('settingsBtn').addEventListener('click', goSettings);
+
+document.getElementById('addCatBtn').addEventListener('click', () => {
+  const name = document.getElementById('newCatName').value.trim();
+  if(!name){
+    showToast('Enter a category name');
+    return;
+  }
+  const key = slugify('', name).substring(1);
+  if(CATEGORIES[key]){
+    showToast('Category already exists');
+    return;
+  }
+  CATEGORIES[key] = { label: name, exercises: [] };
+  saveCategories();
+  document.getElementById('newCatName').value = '';
+  renderSettingsDropdown();
+  renderHome();
+  showToast('Category added');
+});
+
+document.getElementById('addExBtn').addEventListener('click', () => {
+  const catKey = document.getElementById('catSelect').value;
+  const name = document.getElementById('newExName').value.trim();
+  if(!catKey){
+    showToast('Select a category');
+    return;
+  }
+  if(!name){
+    showToast('Enter an exercise name');
+    return;
+  }
+  if(CATEGORIES[catKey].exercises.includes(name)){
+    showToast('Exercise already exists');
+    return;
+  }
+  CATEGORIES[catKey].exercises.push(name);
+  saveCategories();
+  document.getElementById('newExName').value = '';
+  document.getElementById('catSelect').value = '';
+  showToast('Exercise added');
+});
+
+renderHome();
+</script>
+</body>
+</html>
+```
